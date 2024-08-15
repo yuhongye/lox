@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+/**
+ * 这个类的职责是什么?
+ */
 @Slf4j
 public class Lox {
     static boolean hasError = false;
