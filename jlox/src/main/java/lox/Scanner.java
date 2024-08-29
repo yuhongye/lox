@@ -1,31 +1,33 @@
 package lox;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import static lox.TokenType.BANG_EQUAL;
-import static lox.TokenType.COMMA;
-import static lox.TokenType.DOT;
-import static lox.TokenType.EOF;
-import static lox.TokenType.EQUAL;
-import static lox.TokenType.EQUAL_EQUAL;
-import static lox.TokenType.GREATER;
-import static lox.TokenType.GTREATER_EQUAL;
-import static lox.TokenType.LEFT_BRACE;
-import static lox.TokenType.LEFT_PAREN;
-import static lox.TokenType.LESS;
-import static lox.TokenType.LESS_EQUAL;
-import static lox.TokenType.MINUS;
-import static lox.TokenType.NUMBER;
-import static lox.TokenType.PLUS;
-import static lox.TokenType.RIGHT_BRACE;
-import static lox.TokenType.RIGHT_PAREN;
-import static lox.TokenType.SEMICOLON;
-import static lox.TokenType.SLASH;
-import static lox.TokenType.STAR;
-import static lox.TokenType.STRING;
+import static lox.TokenType.*;
 
 public class Scanner {
+    private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
+    static {
+        KEYWORDS.put("and", AND);
+        KEYWORDS.put("class", CLASS);
+        KEYWORDS.put("else", ELSE);
+        KEYWORDS.put("false", FALSE);
+        KEYWORDS.put("for", FOR);
+        KEYWORDS.put("fun", FUN);
+        KEYWORDS.put("if", IF);
+        KEYWORDS.put("nil", NIL);
+        KEYWORDS.put("or", OR);
+        KEYWORDS.put("print", PRINT);
+        KEYWORDS.put("return", RETURN);
+        KEYWORDS.put("super", SUPER);
+        KEYWORDS.put("this", THIS);
+        KEYWORDS.put("true", TRUE);
+        KEYWORDS.put("var", VAR);
+        KEYWORDS.put("while", WHILE);
+    }
+
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
 
@@ -67,7 +69,7 @@ public class Scanner {
             case '*': addToken(STAR); break;
             // 一个或者两个字符
             case '!':
-                addToken(match('=') ? BANG_EQUAL : BANG_EQUAL);
+                addToken(match('=') ? BANG_EQUAL : BANG);
                 break;
             case '=':
                 addToken(match('=') ? EQUAL_EQUAL : EQUAL);
@@ -84,6 +86,8 @@ public class Scanner {
                     while (peek() != '\n' && !isAtEnd()) {
                         advance();
                     }
+                } if (match('*')) {
+                    multiComment();
                 } else {
                     addToken(SLASH);
                 }
@@ -104,6 +108,8 @@ public class Scanner {
             default:
                 if (isDigit(c)) {
                    number();
+                } else if (isAlpha(c)) {
+                    identifier();
                 } else {
                     Lox.error(line, "Unexpected character.");
                     break;
@@ -150,9 +156,23 @@ public class Scanner {
         return true;
     }
 
+    private void multiComment() {
+        while (!(peek() == '*' && peekNext() == '/')) {
+            if (isAtEnd()) {
+                Lox.error(line, "Unterminated block comment.");
+                break;
+            } else {
+                char skip = advance();
+                if (skip == '\n') {
+                    line++;
+                }
+            }
+        }
+    }
+
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
-            if (peek() == '\n') {
+            if (peek() == '\n') { // 支持换行, 为了处理简单
                 line++;
             }
             advance();
@@ -187,5 +207,20 @@ public class Scanner {
         addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
     }
 
+    private void identifier() {
+        while (isAlphaNumeric(peek())) {
+            advance();
+        }
+        String text = source.substring(start, current);
+        TokenType type = KEYWORDS.getOrDefault(text, IDENTIFIER);
+        addToken(type);
+    }
 
+    private boolean isAlpha(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    }
+
+    private boolean isAlphaNumeric(char c) {
+        return isAlpha(c) || isDigit(c);
+    }
 }

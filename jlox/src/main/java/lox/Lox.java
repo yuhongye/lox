@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * 这个类的职责是什么?
@@ -54,7 +55,8 @@ public class Lox {
     }
 
     private static void run(String source) {
-        System.out.println(source);;
+        List<Token> tokens = new Scanner(source).scanTokens();
+        System.out.println(tokens);
     }
 
     static void error(int line, String message) {
